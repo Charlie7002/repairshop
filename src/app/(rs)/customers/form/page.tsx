@@ -7,6 +7,13 @@ import CustomerForm from '@/app/(rs)/customers/form/CustomerForm'
 interface SearchParams {
 	searchParams: Promise<{ [key: string]: string | undefined }>
 }
+export async function generateMetadata({ searchParams }: SearchParams) {
+	const { customerId } = await searchParams
+
+	if (!customerId) return { title: 'New Customer' }
+
+	return { title: `Edit Customer #${customerId}` }
+}
 
 const CustomerFormPage = async ({ searchParams }: SearchParams) => {
 	try {

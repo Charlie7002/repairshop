@@ -4,6 +4,7 @@ import { NextRequest } from 'next/server'
 export default withAuth(
 	async function middleware(req: NextRequest) {
 		console.log(req)
+		console.log(req.headers)
 	},
 	{
 		isReturnToCurrentPage: true,
@@ -24,6 +25,6 @@ export const config = {
 		 * - login
 		 * - homepage (represented with $ after beginning /)
 		 */
-		// '/((?!api|_next/static|_next/image|auth|favicon.ico|robots.txt|images|login|$).*)',
+		'/((?!api|_next/static|_next/image|auth|favicon.ico|robots.txt|images|login|$).*)',
 	],
 }

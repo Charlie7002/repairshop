@@ -5,6 +5,7 @@ import { LogoutLink } from '@kinde-oss/kinde-auth-nextjs/components'
 import { NavButton } from '@/components/NavButton'
 import { ModeToggle } from '@/components/ModeToggle'
 import { Button } from './ui/button'
+import { NavButtonMenu } from './NavButtonMenu'
 
 export function Header() {
 	return (
@@ -26,11 +27,13 @@ export function Header() {
 
 				<div className="flex items-center">
 					<NavButton href="/tickets" label="Tickets" icon={File} />
-
-					<NavButton
-						href="/customers"
-						label="Customers"
+					<NavButtonMenu
 						icon={UsersRound}
+						label="Customers Menu"
+						choices={[
+							{ title: 'Search Customer', href: '/customers' },
+							{ title: 'New Customers', href: '/customers/form' },
+						]}
 					/>
 
 					<ModeToggle />

@@ -13,12 +13,22 @@ import {
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { FormProvider, useForm } from 'react-hook-form'
+import { useKindeBrowserClient } from '@kinde-oss/kinde-auth-nextjs'
+import CheckboxWithLabel from '@/components/inputs/CheckboxWithLabel'
+import { useAction } from 'next-safe-action/hooks'
+import { saveCustomerAction } from '@/app/actions/saveCustomerAction'
+import { toast } from 'sonner'
+import { LoaderCircle } from 'lucide-react'
+import { DisplayServerActionResponse } from '@/components/DisplayServerActionResponse'
 
 type Props = {
 	customer?: selectCustomerSchemaType
 }
 
 const CustomerForm = ({ customer }: Props) => {
+	const { getPermission, isLoading } = useKindeBrowserClient()
+	const isManager = !isLoading && getPermission('manager')?.isGranted
+
 	const defaultValues: insertCustomerSchemaType = {
 		id: customer?.id || 0,
 		firstName: customer?.firstName || '',
@@ -31,6 +41,7 @@ const CustomerForm = ({ customer }: Props) => {
 		email: customer?.email || '',
 		phone: customer?.phone || '',
 		notes: customer?.notes || '',
+		active: customer?.active || true,
 	}
 
 	const form = useForm<insertCustomerSchemaType>({
@@ -39,15 +50,44 @@ const CustomerForm = ({ customer }: Props) => {
 		resolver: zodResolver(insertCustomerSchema),
 	})
 
+	const {
+		execute: executeSave,
+		result: saveResult,
+		isPending: isSaving,
+		reset: resetSaveAction,
+	} = useAction(saveCustomerAction, {
+		onSuccess: ({ data }) => {
+			if (data?.message) {
+				toast.success(
+					<div>
+						<p> Success! 🎉</p>
+						{data.message}
+					</div>,
+				)
+			}
+		},
+		onError: (error) => {
+			console.error(error)
+			toast.error(
+				<div>
+					<p> Error </p>Save failed
+				</div>,
+			)
+		},
+	})
+
 	async function submitForm(data: insertCustomerSchemaType) {
-		console.log(data)
+		executeSave(data)
+		resetSaveAction()
 	}
 
 	return (
 		<div className="flex flex-col gap-1 sm:px-8">
+			<DisplayServerActionResponse result={saveResult} />
 			<div>
 				<h2 className="text-2xl font-bold">
-					{customer?.id ? 'Edit' : 'New'} Customer form
+					{customer?.id ? 'Edit' : 'New'} Customer{' '}
+					{customer?.id ? `#${customer.id}` : 'Form'}
 				</h2>
 			</div>
 			<FormProvider {...form}>
@@ -55,7 +95,7 @@ const CustomerForm = ({ customer }: Props) => {
 					onSubmit={form.handleSubmit(submitForm)}
 					className="flex flex-col md:flex-row gap-4 md:gap-8"
 				>
-					<div className="flex flex-col gap-" w-full max-w-xs>
+					<div className="flex flex-col gap-4 w-full max-w-xs">
 						<InputWithLabel<insertCustomerSchemaType>
 							fieldTitle="FirstName"
 							nameInSchema="firstName"
@@ -74,12 +114,17 @@ const CustomerForm = ({ customer }: Props) => {
 							fieldTitle="Address 2"
 							nameInSchema="address2"
 						/>
-					</div>
-					<div className="flex flex-col gap-4" w-full max-w-xs>
 						<InputWithLabel<insertCustomerSchemaType>
 							fieldTitle="City"
 							nameInSchema="city"
 						/>
+						<SelectWithLabel<insertCustomerSchemaType>
+							fieldTitle="Department"
+							nameInSchema="state"
+							data={DepArray}
+						/>
+					</div>
+					<div className="flex flex-col gap-4 w-full max-w-xs">
 						<InputWithLabel<insertCustomerSchemaType>
 							fieldTitle="Zip Code"
 							nameInSchema="zip"
@@ -102,6 +147,16 @@ const CustomerForm = ({ customer }: Props) => {
 							className="h-40"
 						/>
 
+						{isLoading ? (
+							<p>Loading...</p>
+						) : isManager && customer?.id ? (
+							<CheckboxWithLabel<insertCustomerSchemaType>
+								fieldTitle="Active"
+								nameInSchema="active"
+								message="Yes"
+							/>
+						) : null}
+
 						<div className="flex gap-2 ">
 							<Button
 								type="submit"
@@ -109,15 +164,25 @@ const CustomerForm = ({ customer }: Props) => {
 								variant="default"
 								title="Save"
 								size="lg"
+								disabled={isSaving}
 							>
-								Save
+								{isSaving ? (
+									<>
+										<LoaderCircle className="animate-spin" /> Saving
+									</>
+								) : (
+									'Save'
+								)}
 							</Button>
 							<Button
 								type="button"
 								className="w-40"
 								variant="destructive"
 								title="Reset"
-								onClick={() => form.reset(defaultValues)}
+								onClick={() => {
+									form.reset(defaultValues)
+									resetSaveAction()
+								}}
 							>
 								Reset
 							</Button>

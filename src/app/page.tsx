@@ -1,7 +1,5 @@
 import Link from 'next/link'
 
-// import { Button } from '@/components/ui/button'
-
 export default function Home() {
 	return (
 		<div className="bg-black bg-[url('/images/home-i.jpg')] bg-cover bg-center">
